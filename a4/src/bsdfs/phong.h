@@ -103,7 +103,6 @@ struct PhongBSDF : BSDF {
 		float PDF = Warp::squareToPhongLobePdf(wi,phongExponent);
 		
 		*pdf = PDF;  // CHANGE LATER
-
 		val = brdf / PDF; // value inside MC estimator
 
         return val;

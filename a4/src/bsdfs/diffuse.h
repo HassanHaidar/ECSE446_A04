@@ -36,7 +36,13 @@ struct DiffuseBSDF : BSDF {
         v3f val(0.f);
         // TODO: Add previous assignment code (if needed)
 		v3f rho = albedo->eval(worldData, i);
-        return rho;
+		float incoming = Frame::cosTheta(i.wi);
+		float outgoing = Frame::cosTheta(i.wo);
+		float cosI = glm::dot(i.wi, glm::normalize(i.frameNs.toLocal(i.frameNs.n)));
+		if ((incoming > 0) && (outgoing > 0)) {
+			val = rho * cosI *INV_PI;
+		}
+		return val;
     }
 
     float pdf(const SurfaceInteraction& i) const override {
@@ -56,10 +62,11 @@ struct DiffuseBSDF : BSDF {
 		// sample a direction
 		v3f wi = Warp::squareToCosineHemisphere(sample); // wi in shading point local coords
 		i.wi = wi;
-		v3f rho = eval(i); // get albedo
 		float PDF = Warp::squareToCosineHemispherePdf(wi); // set the value of odf variable
+		*pdf = PDF;
+		v3f brdf = eval(i);
 		// calculate Diffuse BRDF
-		val = rho * INV_PI * Frame::cosTheta(wi) / (PDF);
+		val = brdf / (PDF);
 
         return val;
     }
