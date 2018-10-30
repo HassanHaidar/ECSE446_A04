@@ -1,6 +1,0 @@
-﻿  renderer.cpp
-c:\users\hassan\desktop\a4_starter\ecse446_a04\a4\src\integrators\direct.h(79): warning C4018: '<': signed/unsigned mismatch
-  tinyrender.vcxproj -> C:\Users\Hassan\Desktop\a4_starter\ECSE446_A04\a4\bin\Release\tinyrender.exe
-  C:\Users\Hassan\Desktop\a4_starter\ECSE446_A04\a4\externals\opengl\dll\glew32.dll
-  C:\Users\Hassan\Desktop\a4_starter\ECSE446_A04\a4\externals\opengl\dll\SDL2.dll
-  2 File(s) copied
