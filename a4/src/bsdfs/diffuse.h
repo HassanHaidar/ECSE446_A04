@@ -42,12 +42,25 @@ struct DiffuseBSDF : BSDF {
     float pdf(const SurfaceInteraction& i) const override {
         float pdf = 0.f;
         // TODO: Implement this
+
+		// NO IDEA WHAT I NEED TO DO
+
+
+		pdf = Warp::squareToCosineHemispherePdf(i.wi); // no idea wth we need this
         return pdf;
     }
 
     v3f sample(SurfaceInteraction& i, const v2f& sample, float* pdf) const override {
         v3f val(0.f);
         // TODO: Implement this
+		// sample a direction
+		v3f wi = Warp::squareToCosineHemisphere(sample); // wi in shading point local coords
+		i.wi = wi;
+		v3f rho = eval(i); // get albedo
+		float PDF = Warp::squareToCosineHemispherePdf(wi); // set the value of odf variable
+		// calculate Diffuse BRDF
+		val = rho * INV_PI * Frame::cosTheta(wi) / (PDF);
+
         return val;
     }
 

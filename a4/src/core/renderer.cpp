@@ -93,13 +93,13 @@ bool Renderer::init(const bool isRealTime, bool nogui) {
 }
 
 void Renderer::render() {
-    if (realTime) {
-        /**
-         * 1) Detect and handle the quit event.
-         * 2) Call the render function using renderpass->render().
-         * 3) Output the rendered image into the GUI window using SDL_GL_SwapWindow(renderpass->window).
-         */
-        // TODO: Add previous assignment code (if needed)
+	if (realTime) {
+		/**
+		 * 1) Detect and handle the quit event.
+		 * 2) Call the render function using renderpass->render().
+		 * 3) Output the rendered image into the GUI window using SDL_GL_SwapWindow(renderpass->window).
+		 */
+		 // TODO: Add previous assignment code (if needed)
 		while (1) { //eqiuvalent to while(True)
 			SDL_Event &event = SDL_Event();
 			while (SDL_PollEvent(&event)) {
@@ -112,16 +112,18 @@ void Renderer::render() {
 			renderpass->render();
 			SDL_GL_SwapWindow(renderpass->window);
 		}
-    } else {
-        /**
-         * 1) Calculate the camera perspective, the camera-to-world transformation matrix and the aspect ratio.
-         * 2) Clear integral RGB buffer.
-         * 3) Loop over all pixels on the image plane.
-         * 4) Generate a ray through each pixel center.
-         * 5) Splat their contribution onto the image plane.
-         */
-        // TODO: Add previous assignment code (if needed)
+	}
+	else {
+		/**
+		 * 1) Calculate the camera perspective, the camera-to-world transformation matrix and the aspect ratio.
+		 * 2) Clear integral RGB buffer.
+		 * 3) Loop over all pixels on the image plane.
+		 * 4) Generate a ray through each pixel center.
+		 * 5) Splat their contribution onto the image plane.
+		 */
+		 // TODO: Add previous assignment code (if needed)
 		integrator->rgb->clear();
+		
 		float px;
 		float py;
 		float aspectRatio = (float)scene.config.width / (float)scene.config.height;
@@ -140,24 +142,30 @@ void Renderer::render() {
 		glm::fvec4 transformedDir;
 		glm::fvec3 rgb = glm::fvec3(0.f, 0.f, 0.f);
 		Sampler sampler = Sampler(260711061);
-		for (int x = 0; x < scene.config.width; x++) {
-			for (int y = 0; y < scene.config.height; y++) {
-				px = (x / (float)scene.config.width); // range = [0,1]
-				py = (y / (float)scene.config.height); // range = [0,1]
-				px = (px * 2 - 1) * scaling*aspectRatio; //range = [-1,1]
-				py = (-py * 2 + 1) * scaling; //range  = [-1,1]
-
-				pixel_center = glm::fvec4(px + (pixel_size_x / 2.f), py - pixel_size_y / 2.f, -1, 1);
-				dir = pixel_center - glm::fvec4(0, 0, 0, 1);// camera position in camera space
-				transformedDir = inverseView * dir;
-				transformedDir = glm::normalize(transformedDir); // make dir vector a unit vector
-				Ray ray = Ray(scene.config.camera.o, transformedDir);
-				rgb = integrator->render(ray, sampler);
-				integrator->rgb->data[y * scene.config.width + x] = rgb;
+			for (int x = 0; x < scene.config.width; x++) {
+				for (int y = 0; y < scene.config.height; y++) {
+					v3f pixelSum(0.f);
+					for (int i = 0; i < scene.config.spp; i++) {
+						px = ((x + sampler.next()) / (float)scene.config.width); // range = [0,1]
+						py = ((y + sampler.next()) / (float)scene.config.height); // range =[0,1]
+						px = (px * 2 - 1) * scaling*aspectRatio; // range  = [-1,1]
+						py = (-py * 2 + 1) * scaling; // range  = [-1,1]
+						//py *= -1;
+						glm::fvec4 rand_pixel_loc = glm::fvec4(px, py, -1, 1);
+						dir = rand_pixel_loc - glm::fvec4(0, 0, 0, 1);
+						transformedDir = inverseView * dir;
+						transformedDir = glm::normalize(transformedDir);
+						Ray ray = Ray(scene.config.camera.o, transformedDir);
+						pixelSum += (integrator->render(ray, sampler));
+					}		
+					rgb = pixelSum / ((float)scene.config.spp);
+					integrator->rgb->data[y * scene.config.width + x] = rgb;
 			}
 		}
-    }
+	}
 }
+
+
 
 /**
  * Post-rendering step.

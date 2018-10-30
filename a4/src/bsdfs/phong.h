@@ -61,18 +61,51 @@ struct PhongBSDF : BSDF {
     v3f eval(const SurfaceInteraction& i) const override {
         v3f val(0.f);
         // TODO: Add previous assignment code (if needed)
+		v3f rhoS = specularReflectance->eval(worldData, i); // specular relectance
+		v3f rhoD = diffuseReflectance->eval(worldData, i);  // diffuse reflectane
+		int phongExponent = exponent->eval(worldData, i);   // phong exponent
+
+		v3f wr = reflect(i.wo);
+		float cosAlpha = glm::dot(i.wi, wr);
+		float cosTheta = Frame::cosTheta(i.wi);
+
+		val = (rhoD * INV_PI + (phongExponent + 2) * INV_TWOPI * pow(cosAlpha, phongExponent)  ) * cosTheta; //  calculate phong BRDF
+
         return val;
     }
 
     float pdf(const SurfaceInteraction& i) const override {
         float pdf = 0.f;
         // TODO: Implement this
+		int phongExponent = exponent->eval(worldData, i);
+
+		pdf = (phongExponent + 2) * INV_TWOPI * pow(i.wi.z, phongExponent); // I THINK
+		
+
         return pdf;
     }
 
     v3f sample(SurfaceInteraction& i, const v2f& _sample, float* pdf) const override {
         v3f val(0.f);
         // TODO: Implement this
+		int phongExponent = exponent->eval(worldData, i);   // phong exponent
+
+		v3f wr = reflect(i.wo); // reflect outgoing ray (in local coords where normal of shading point is z-axis
+		v3f wrWorld = i.frameNs.toWorld(wr); // transform wr to world coords
+		Frame wrFrame = Frame(wrWorld); // create frame around wrWorld
+
+		v3f wi = Warp::squareToPhongLobe(_sample, phongExponent); // sample direction according to phong lobe in coord where reflected direction is z-axis
+		v3f wiWorld = wrFrame.toWorld(wi); // transform wi to world coords
+		i.wi = i.frameNs.toLocal(wiWorld); // set wi for intersection test
+
+		// calculate BRDF
+		v3f brdf = eval(i);
+		float PDF = Warp::squareToPhongLobePdf(wi,phongExponent);
+		
+		*pdf = PDF;  // CHANGE LATER
+
+		val = brdf / PDF; // value inside MC estimator
+
         return val;
     }
 

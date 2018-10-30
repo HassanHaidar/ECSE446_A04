@@ -121,12 +121,24 @@ namespace Warp {
 inline v3f squareToUniformSphere(const p2f& sample) {
     v3f v(0.f);
     // TODO: Add previous assignment code (if needed)
+	// get xi1 and xi2 form a canonical uniform distribution
+	float xi1 = sample.x;
+	float xi2 = sample.y;
+
+	float wz = 2 * xi1 - 1;
+	float r = sqrt(1 - pow(wz, 2));
+	float phi = 2 * M_PI *xi2;
+	float wx = r * cos(phi);
+	float wy = r * sin(phi);
+
+	v = v3f(wx, wy, wz);
     return v;
 }
 
 inline float squareToUniformSpherePdf() {
     float pdf = 0.f;
     // TODO: Add previous assignment code (if needed)
+	pdf = INV_FOURPI;
     return pdf;
 }
 
@@ -191,12 +203,21 @@ inline float squareToCosineHemispherePdf(const v3f& v) {
 inline v3f squareToPhongLobe(const p2f& sample, float exponent) {
     v3f v(0.f);
     // TODO: Add previous assignment code (if needed)
+	float xi1 = sample.x;
+	float xi2 = sample.y;
+	float theta = acos(pow((1 - xi1), 1.0f / (exponent + 2)));
+	float phi = 2 * M_PI * xi2;
+	v = v3f(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
     return v;
 }
 
 inline float squareToPhongLobePdf(const v3f& v, float exponent) {
     float pdf = 0.f;
     // TODO: Add previous assignment code (if needed)
+	// n is phong exponent
+	// v in in local coords where wr is z-axis
+	// cosTheta = z component of wi
+	pdf = (exponent + 2) * INV_TWOPI * pow(v.z, exponent);
     return pdf;
 }
 
@@ -209,6 +230,7 @@ inline v3f squareToUniformCone(const p2f& sample, float cosThetaMax) {
 inline float squareToUniformConePdf(float cosThetaMax) {
     float pdf = 0.f;
     // TODO: Implement this
+	pdf = 1 / (2 * M_PI * (1 - cosThetaMax));
     return pdf;
 }
 
