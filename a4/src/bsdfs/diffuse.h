@@ -35,7 +35,8 @@ struct DiffuseBSDF : BSDF {
     v3f eval(const SurfaceInteraction& i) const override {
         v3f val(0.f);
         // TODO: Add previous assignment code (if needed)
-        return val;
+		v3f rho = albedo->eval(worldData, i);
+        return rho;
     }
 
     float pdf(const SurfaceInteraction& i) const override {

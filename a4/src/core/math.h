@@ -145,18 +145,46 @@ inline float squareToUniformHemispherePdf(const v3f& v) {
 inline v2f squareToUniformDiskConcentric(const p2f& sample) {
     v2f v(0.f);
     // TODO: Add previous assignment code (if needed)
+	// map uniform random numbers to [-1,1]
+	float x = 2 * sample.x - 1;
+	float y = 2 * sample.y - 1;
+
+	// handle degeneracy at origin
+	if (x == 0 && y == 0) {
+		return p2f(0, 0);
+	}
+
+
+	// apply concentric mapping to point
+	float r = 0;
+	float theta = 0;
+
+	if (std::abs(x) > std::abs(y)) {
+		r = x;
+		theta = (M_PI / 4) * (y / x);
+	}
+	else {
+		r = y;
+		theta = (M_PI / 2) - (M_PI / 4) * (x / y);
+	}
+	v = v2f(r * cos(theta), r * sin(theta));
+
     return v;
 }
 
 inline v3f squareToCosineHemisphere(const p2f& sample) {
     v3f v(0.f);
     // TODO: Add previous assignment code (if needed)
+	v2f a = squareToUniformDiskConcentric(sample); // point in disk
+	float z = sqrt(max(0.0f, 1 - (pow(a.x, 2) + pow(a.y, 2))));
+	v = v3f(a.x, a.y, z);
     return v;
 }
 
 inline float squareToCosineHemispherePdf(const v3f& v) {
     float pdf = 0.f;
     // TODO: Add previous assignment code (if needed)
+	pdf = v.z * INV_PI;
     return pdf;
 }
 

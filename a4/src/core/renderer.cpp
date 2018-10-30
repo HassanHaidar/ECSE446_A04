@@ -100,6 +100,18 @@ void Renderer::render() {
          * 3) Output the rendered image into the GUI window using SDL_GL_SwapWindow(renderpass->window).
          */
         // TODO: Add previous assignment code (if needed)
+		while (1) { //eqiuvalent to while(True)
+			SDL_Event &event = SDL_Event();
+			while (SDL_PollEvent(&event)) {
+				if (event.type == SDL_QUIT) { // check if event is quit
+					SDL_Quit(); //quit sdl
+					return;
+				}
+			}
+			renderpass->updateCamera(event);
+			renderpass->render();
+			SDL_GL_SwapWindow(renderpass->window);
+		}
     } else {
         /**
          * 1) Calculate the camera perspective, the camera-to-world transformation matrix and the aspect ratio.
@@ -109,6 +121,41 @@ void Renderer::render() {
          * 5) Splat their contribution onto the image plane.
          */
         // TODO: Add previous assignment code (if needed)
+		integrator->rgb->clear();
+		float px;
+		float py;
+		float aspectRatio = (float)scene.config.width / (float)scene.config.height;
+		float FoV = glm::radians(scene.config.camera.fov);
+		float scaling = tan(FoV / 2.f);
+		float pixel_size_x = (2.f * scaling * aspectRatio / scene.config.width);
+		float pixel_size_y = (2.f * scaling / scene.config.height);
+		float zNearField = 1.f;  // arbitrarily chosen
+		float zFarField = 100.0f; // arbitrarily chosen
+
+
+		glm::mat4 inverseView = glm::inverse(glm::lookAt(scene.config.camera.o, scene.config.camera.at, scene.config.camera.up));
+		glm::mat4 cameraPerspective = glm::perspective(FoV, (float)aspectRatio, zNearField, zFarField);	// NOT USED
+		glm::fvec4 pixel_center;
+		glm::fvec4 dir;
+		glm::fvec4 transformedDir;
+		glm::fvec3 rgb = glm::fvec3(0.f, 0.f, 0.f);
+		Sampler sampler = Sampler(260711061);
+		for (int x = 0; x < scene.config.width; x++) {
+			for (int y = 0; y < scene.config.height; y++) {
+				px = (x / (float)scene.config.width); // range = [0,1]
+				py = (y / (float)scene.config.height); // range = [0,1]
+				px = (px * 2 - 1) * scaling*aspectRatio; //range = [-1,1]
+				py = (-py * 2 + 1) * scaling; //range  = [-1,1]
+
+				pixel_center = glm::fvec4(px + (pixel_size_x / 2.f), py - pixel_size_y / 2.f, -1, 1);
+				dir = pixel_center - glm::fvec4(0, 0, 0, 1);// camera position in camera space
+				transformedDir = inverseView * dir;
+				transformedDir = glm::normalize(transformedDir); // make dir vector a unit vector
+				Ray ray = Ray(scene.config.camera.o, transformedDir);
+				rgb = integrator->render(ray, sampler);
+				integrator->rgb->data[y * scene.config.width + x] = rgb;
+			}
+		}
     }
 }
 

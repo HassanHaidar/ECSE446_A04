@@ -62,8 +62,48 @@ struct DirectIntegrator : Integrator {
 
     v3f renderCosineHemisphere(const Ray& ray, Sampler& sampler) const {
         v3f Lr(0.f);
-        // TODO: Implement this
-        return Lr;
+
+		SurfaceInteraction& info = SurfaceInteraction();
+		bool isIntersect = scene.bvh->intersect(ray, info);
+		if (isIntersect) {
+		
+			// check if ray intersects a light source
+			if (getEmission(info) != v3f(0.f,0.f,0.f)) {
+				size_t emitterID = getEmitterIDByShapeID(info.shapeID);
+				Emitter emitter = getEmitterByID(emitterID);
+				Lr = emitter.getRadiance();
+			}
+			// if shading point is not at a light source, do MC estimation
+			else {
+				// MC loop
+				for (int i = 0; i < m_emitterSamples; i++) {
+					
+					// sample direction
+					p2f p(sampler.next2D());
+					v3f wi = Warp::squareToCosineHemisphere(p);
+
+					// check if the shading point is occluded
+					SurfaceInteraction& shadowIntersection = SurfaceInteraction();
+					//float maxT = glm::distance(info.p, scene.getShapeCenter(emitter.shapeID)); // FIX THIS LATER
+					Ray shadowRay = Ray(info.p + Epsilon, info.frameNs.toWorld(wi), Epsilon);
+
+					// if sampled direction intersects an object
+					if (scene.bvh->intersect(shadowRay, shadowIntersection)) {
+						// if object is not a light source, then shading point is occluded,
+						// then getEmission will return 0;
+						// otherwise it will return radiosity of the light
+						
+						const BSDF *material = getBSDF(info);
+						v3f rho = material->eval(info); // not sure if this works.
+						Lr += rho * INV_PI * getEmission(shadowIntersection) * Frame::cosTheta(wi) /(m_emitterSamples *  Warp::squareToCosineHemispherePdf(wi));
+
+							
+						
+					}
+				}
+			}
+		}
+		return Lr;
     }
 
     v3f renderBSDF(const Ray& ray, Sampler& sampler) const {

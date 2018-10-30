@@ -4,11 +4,11 @@
     <ShowAllFiles>true</ShowAllFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>$(SolutionDir)data/a4/veach/tinyrender/veach_bsdf_offline.toml</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(SolutionDir)data/a4/sphere/tinyrender/sphere_cosine_64.toml</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>$(SolutionDir)data/a4/veach/tinyrender/veach_bsdf_offline.toml</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(SolutionDir)data/a4/sphere/tinyrender/sphere_cosine_64.toml</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
