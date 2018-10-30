@@ -1,0 +1,5 @@
+*.ipch
+a4/.vs/tinyrender
+*.exr
+a4/bin/Debug a4/bin/Release
+bin/
