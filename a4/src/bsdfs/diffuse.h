@@ -38,9 +38,8 @@ struct DiffuseBSDF : BSDF {
 		v3f rho = albedo->eval(worldData, i);
 		float incoming = Frame::cosTheta(i.wi);
 		float outgoing = Frame::cosTheta(i.wo);
-		float cosI = glm::dot(i.wi, glm::normalize(i.frameNs.toLocal(i.frameNs.n)));
 		if ((incoming > 0) && (outgoing > 0)) {
-			val = rho * cosI *INV_PI;
+			val = rho * incoming *INV_PI;
 		}
 		return val;
     }
@@ -48,11 +47,7 @@ struct DiffuseBSDF : BSDF {
     float pdf(const SurfaceInteraction& i) const override {
         float pdf = 0.f;
         // TODO: Implement this
-
-		// NO IDEA WHAT I NEED TO DO
-
-
-		pdf = Warp::squareToCosineHemispherePdf(i.wi); // no idea wth we need this
+		pdf = Warp::squareToCosineHemispherePdf(i.wi);
         return pdf;
     }
 

@@ -50,10 +50,6 @@ struct DirectIntegrator : Integrator {
 		ne = glm::normalize(sampleLocal); // set normal in local coords;
 		wiW = glm::normalize(pos - pShading); // set wi in world coords
 		pdf = Warp::squareToUniformSpherePdf() / pow(emitterRadius,2); // set pdf
-
-
-
-
     }
 
     void sampleSphereBySolidAngle(const p2f& sample,
@@ -129,8 +125,6 @@ struct DirectIntegrator : Integrator {
 					v3f ne = v3f(0);  // normal at light sample in local coords;
 					v3f wiW = v3f(0); // sampled ray in local coords;
 					float pdf = 0;	  // pdf evaluated at sample point
-
-	
 
 					sampleSphereByArea(p, info.p, emitterCenter, emitterRadius, pos, ne, wiW, pdf);
 					info.wi = info.frameNs.toLocal(wiW);
@@ -349,7 +343,7 @@ struct DirectIntegrator : Integrator {
 
 
 						v3f emission = getEmission(shadowIntersection);
-						Lr += brdf * emission / (m_emitterSamples *  pdf * emPdf );
+						Lr += brdf * emission * weight / (m_emitterSamples *  pdf * emPdf );
 
 					}
 				}
@@ -368,7 +362,7 @@ struct DirectIntegrator : Integrator {
 					SurfaceInteraction& shadowIntersection = SurfaceInteraction();
 					const BSDF *material = getBSDF(info);
 					float pdf = 0;
-					v3f value = material->sample(info, p, &pdf); // calculate value
+					v3f value = material->sample(info, p, &pdf); // calculate brdf divided by pdf
 
 					float pdf_f = pdf;
 					// initiate variables to be passed to sampler
@@ -380,7 +374,7 @@ struct DirectIntegrator : Integrator {
 					
 					// if sampled direction intersects an object
 					if (scene.bvh->intersect(shadowRay, shadowIntersection)) {
-						Lr += value * getEmission(shadowIntersection) * weight / ((float)m_bsdfSamples * emPdf);
+						Lr += value * getEmission(shadowIntersection) * weight / ((float)m_bsdfSamples);
 					}
 				}
 				
