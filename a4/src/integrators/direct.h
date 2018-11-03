@@ -126,7 +126,7 @@ struct DirectIntegrator : Integrator {
 					float pdf = 0;	  // pdf evaluated at sample point
 
 					sampleSphereByArea(p, info.p, emitterCenter, emitterRadius, pos, ne, wiW, pdf);
-					info.wi = info.frameNs.toLocal(wiW);
+					info.wi = glm::normalize(info.frameNs.toLocal(wiW));
 
 					SurfaceInteraction& shadowIntersection = SurfaceInteraction();
 					Ray shadowRay = Ray(info.p + Epsilon, wiW, Epsilon);
@@ -183,8 +183,7 @@ struct DirectIntegrator : Integrator {
 					if (scene.bvh->intersect(shadowRay, shadowIntersection)) {
 						// if object is not a light source, then shading point is occluded,
 						// then getEmission will return 0;
-						// otherwise it will return radiosity of the light
-						
+						// otherwise it will return radiosity of the light		
 						const BSDF *material = getBSDF(info);
 						v3f brdf = material->eval(info); // not sure if this works.
 						Lr += brdf * getEmission(shadowIntersection) /(m_emitterSamples *  Warp::squareToCosineHemispherePdf(wi));				
@@ -218,7 +217,7 @@ struct DirectIntegrator : Integrator {
 					float pdf = 0;
 					v3f value = material->sample(info, p, &pdf); // brdf divided by pdf
 					//float maxT = glm::distance(info.p, scene.getShapeCenter(emitter.shapeID));
-					Ray shadowRay = Ray(info.p + Epsilon, info.frameNs.toWorld(info.wi), Epsilon);
+					Ray shadowRay = Ray(info.p + Epsilon, glm::normalize(info.frameNs.toWorld(info.wi)), Epsilon);
 					// if sampled direction intersects an object
 					if (scene.bvh->intersect(shadowRay, shadowIntersection)) {
 						Lr += value * getEmission(shadowIntersection)/((float)m_bsdfSamples);
@@ -246,7 +245,6 @@ struct DirectIntegrator : Integrator {
 			// if shading point is not at a light source, do MC estimation
 			else {
 
-
 				for (int i = 0; i < m_emitterSamples; i++) {
 
 					// sample a light source and get its information
@@ -261,15 +259,13 @@ struct DirectIntegrator : Integrator {
 					v3f wiW = v3f(0); // sampled ray in local coords;
 					float pdf = 0;	  // sa pdf evaluated at sample point
 					sampleSphereBySolidAngle(p, info.p, emitterCenter, emitterRadius, wiW, pdf);
-					info.wi = info.frameNs.toLocal(wiW);
+					info.wi = glm::normalize(info.frameNs.toLocal(wiW));
 
 					SurfaceInteraction& shadowIntersection = SurfaceInteraction();
-					//float maxT = glm::distance(info.p, scene.getShapeCenter(emitter.shapeID)); // FIX THIS LATER
 					Ray shadowRay = Ray(info.p + Epsilon, wiW, Epsilon);
 
 					// if sampled direction intersects an object
 					if (scene.bvh->intersect(shadowRay, shadowIntersection)) {
- 	
 						float cosThetaI = Frame::cosTheta(info.frameNs.toLocal(wiW));
 						const BSDF *material = getBSDF(info);
 						v3f brdf = material->eval(info);
@@ -316,7 +312,7 @@ struct DirectIntegrator : Integrator {
 					float pdf = 0;	  // pdf evaluated at sample point
 
 					sampleSphereBySolidAngle(p, info.p, emitterCenter, emitterRadius, wiW, pdf); // sample wi acording to solid angle
-					info.wi = info.frameNs.toLocal(wiW); // set wi for info
+					info.wi = glm::normalize(info.frameNs.toLocal(wiW)); // set wi for info
 
 					SurfaceInteraction& shadowIntersection = SurfaceInteraction();
 					Ray shadowRay = Ray(info.p + Epsilon, wiW, Epsilon);
@@ -354,7 +350,7 @@ struct DirectIntegrator : Integrator {
 					float pdf_f = pdf;
 					// initiate variables to be passed to sampler
 					v3f wiW = v3f(0); // sampled ray in local coords;
-					Ray shadowRay = Ray(info.p + Epsilon, info.frameNs.toWorld(info.wi), Epsilon);
+					Ray shadowRay = Ray(info.p + Epsilon, glm::normalize(info.frameNs.toWorld(info.wi)), Epsilon);
 					// sampleSphereBySolidAngle(p, info.p, emitterCenter, emitterRadius, wiW, pdf_g);
 
 					

@@ -78,7 +78,9 @@ struct PhongBSDF : BSDF {
         float pdf = 0.f;
         // TODO: Implement this
 		int phongExponent = exponent->eval(worldData, i);
-		pdf = (phongExponent + 2) * INV_TWOPI * pow(i.wi.z, phongExponent);
+		v3f wr = reflect(i.wo);
+		float cosAlpha = glm::dot(i.wi, wr);
+		pdf = (phongExponent + 2) * INV_TWOPI * pow(cosAlpha, phongExponent);
 		
 
         return pdf;
@@ -95,13 +97,12 @@ struct PhongBSDF : BSDF {
 
 		v3f wi = Warp::squareToPhongLobe(_sample, phongExponent); // sample direction according to phong lobe in coord where reflected direction is z-axis
 		v3f wiWorld = wrFrame.toWorld(wi); // transform wi to world coords
-		i.wi = i.frameNs.toLocal(wiWorld); // set wi for intersection test
+		i.wi = glm::normalize(i.frameNs.toLocal(wiWorld)); // set wi for intersection test
 
 		// calculate BRDF
 		v3f brdf = eval(i);
 		float PDF = Warp::squareToPhongLobePdf(wi,phongExponent);
-		
-		*pdf = PDF;  // CHANGE LATER
+		*pdf = PDF; // set pdf
 		val = brdf / PDF; // value inside MC estimator
 
         return val;
