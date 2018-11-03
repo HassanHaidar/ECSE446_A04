@@ -69,7 +69,7 @@ struct PhongBSDF : BSDF {
 		float cosAlpha = glm::dot(i.wi, wr);
 		float cosTheta = Frame::cosTheta(i.wi);
 
-		val = (rhoD * INV_PI + (phongExponent + 2) * INV_TWOPI * pow(cosAlpha, phongExponent)  ) * cosTheta; //  calculate phong BRDF
+		val = (rhoD * INV_PI + rhoS * (phongExponent + 2) * INV_TWOPI * pow(cosAlpha, phongExponent)) *glm::max(0.f, cosTheta); //  calculate phong BRDF
 
         return val;
     }
@@ -78,8 +78,7 @@ struct PhongBSDF : BSDF {
         float pdf = 0.f;
         // TODO: Implement this
 		int phongExponent = exponent->eval(worldData, i);
-
-		pdf = (phongExponent + 2) * INV_TWOPI * pow(i.wi.z, phongExponent); // I THINK
+		pdf = (phongExponent + 2) * INV_TWOPI * pow(i.wi.z, phongExponent);
 		
 
         return pdf;

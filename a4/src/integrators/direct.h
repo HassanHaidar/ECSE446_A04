@@ -87,7 +87,6 @@ struct DirectIntegrator : Integrator {
 		v3f sampledPointWorld = specFrame.toWorld(sampledPoint); // sampled points in world coords
 
 		wiW = glm::normalize(specFrame.toWorld(v3f(std::cos(phi) * sinTheta, std::sin(phi)*sinTheta, cosTheta)));
-
 		pdf = Warp::squareToUniformConePdf(cosThetaMax); // set pdf value
 
     }
@@ -130,14 +129,12 @@ struct DirectIntegrator : Integrator {
 					info.wi = info.frameNs.toLocal(wiW);
 
 					SurfaceInteraction& shadowIntersection = SurfaceInteraction();
-					//float maxT = glm::distance(info.p, scene.getShapeCenter(emitter.shapeID)); // FIX THIS LATER
 					Ray shadowRay = Ray(info.p + Epsilon, wiW, Epsilon);
 
 					// if sampled direction intersects an object
 					if (scene.bvh->intersect(shadowRay, shadowIntersection)) {
 
 						// calculate the values for the Geometry term term
-						// float cosThetaI = Frame::cosTheta(info.frameNs.toLocal(wiW)); 
 						float cosThetaO = glm::dot(ne, wiW); // angle between wi and normal at light point
 						float distance = glm::distance(pos, info.p);
 						float G =  glm::max(0.f,cosThetaO) / pow(distance,2);
@@ -180,7 +177,6 @@ struct DirectIntegrator : Integrator {
 
 					// check if the shading point is occluded
 					SurfaceInteraction& shadowIntersection = SurfaceInteraction();
-					//float maxT = glm::distance(info.p, scene.getShapeCenter(emitter.shapeID)); // FIX THIS LATER
 					Ray shadowRay = Ray(info.p + Epsilon, info.frameNs.toWorld(wi), Epsilon);
 
 					// if sampled direction intersects an object
@@ -336,9 +332,8 @@ struct DirectIntegrator : Integrator {
 						// pdf_f is for emitter sampling
 						// pdf_g is for BRDF sampling
 						// sample using bsdf
-						float pdf_f = pdf; // pdf of the sample used
-						float pdf_g = 0;
-						material->sample(info, p, &pdf_g); // no need to return brdf/this is only used to sample a direction and calculate respective pdf
+						float pdf_f = pdf * getEmitterPdf(em); // pdf of the sample used
+						float pdf_g = material->pdf(info); // calcualte bsdf pdf of the same sample
 						float weight = balanceHeuristic(m_emitterSamples, pdf_f, m_bsdfSamples, pdf_g);
 
 
@@ -350,14 +345,6 @@ struct DirectIntegrator : Integrator {
 
 				for (int i = 0; i < m_bsdfSamples; i++) {
 
-					// sample a light source
-					float emPdf;
-					size_t id = selectEmitter(sampler.next(), emPdf);
-					const Emitter& em = getEmitterByID(id); // returns emitter id
-					v3f emitterCenter = scene.getShapeCenter(em.shapeID);
-					float emitterRadius = scene.getShapeRadius(em.shapeID);
-
-
 					p2f p(sampler.next2D());
 					SurfaceInteraction& shadowIntersection = SurfaceInteraction();
 					const BSDF *material = getBSDF(info);
@@ -367,14 +354,36 @@ struct DirectIntegrator : Integrator {
 					float pdf_f = pdf;
 					// initiate variables to be passed to sampler
 					v3f wiW = v3f(0); // sampled ray in local coords;
-					float pdf_g = 0;	  // pdf evaluated at sample point
 					Ray shadowRay = Ray(info.p + Epsilon, info.frameNs.toWorld(info.wi), Epsilon);
-					sampleSphereBySolidAngle(p, info.p, emitterCenter, emitterRadius, wiW, pdf_g);
-					float weight = balanceHeuristic(m_bsdfSamples, pdf_f, m_emitterSamples, pdf_g);					
+					// sampleSphereBySolidAngle(p, info.p, emitterCenter, emitterRadius, wiW, pdf_g);
+
 					
 					// if sampled direction intersects an object
 					if (scene.bvh->intersect(shadowRay, shadowIntersection)) {
-						Lr += value * getEmission(shadowIntersection) * weight / ((float)m_bsdfSamples);
+						if (getEmission(shadowIntersection) != v3f(0.f)) {
+
+
+
+							//==========================calculate sa pdf for sampled direction==============================
+
+							// get light that shadowRay intersected with
+							size_t shapeID = shadowIntersection.shapeID;
+							size_t emitterID = getEmitterIDByShapeID(shapeID);
+							const Emitter& em = getEmitterByID(emitterID);
+							v3f emitterCenter = scene.getShapeCenter(em.shapeID);
+							float emitterRadius = scene.getShapeRadius(em.shapeID);
+
+							// calculate sa pdf
+							float specDistance = glm::distance(emitterCenter, info.p); // distance between shadingPoint and emitterCenter
+							float sinThetaMaxSquared = pow(emitterRadius / specDistance, 2);
+							float cosThetaMax = std::sqrt(std::max(0.f, 1 - sinThetaMaxSquared));
+							float pdf_g = Warp::squareToUniformConePdf(cosThetaMax) * getEmitterPdf(em); // should I multiply by getEmitterPdf(em)?
+							//============================================================================================= 
+							float weight = balanceHeuristic(m_bsdfSamples, pdf_f, m_emitterSamples, pdf_g);
+
+
+							Lr += value * getEmission(shadowIntersection) * weight / ((float)m_bsdfSamples);
+						}
 					}
 				}
 				

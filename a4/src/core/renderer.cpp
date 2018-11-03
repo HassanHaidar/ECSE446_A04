@@ -142,6 +142,8 @@ void Renderer::render() {
 		glm::fvec4 transformedDir;
 		glm::fvec3 rgb = glm::fvec3(0.f, 0.f, 0.f);
 		Sampler sampler = Sampler(260711061);
+
+		// do anti-aliasing if there is more one sample per pixel
 		if (scene.config.spp > 1){
 			for (int x = 0; x < scene.config.width; x++) {
 				for (int y = 0; y < scene.config.height; y++) {
